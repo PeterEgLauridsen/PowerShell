@@ -1,0 +1,44 @@
+   function test {
+   $ComputerHostname = Get-ChildItem -path env:computername
+
+   $ComputerHW = Get-WmiObject -Class Win32_ComputerSystem | select Manufacturer,Model | FT -AutoSize
+
+   $ComputerSerialNumber = Get-Wmiobject -class win32_bios | select SerialNumber
+
+   $ComputerCPU = Get-WmiObject win32_processor | select DeviceID,Name | FT -AutoSize
+
+   $ComputerRam_Total = Get-WmiObject Win32_PhysicalMemoryArray | select MemoryDevices,MaxCapacity | FT -AutoSize
+
+   $ComputerRAM = Get-WmiObject Win32_PhysicalMemory | select DeviceLocator,Manufacturer,PartNumber,Capacity,Speed | FT -AutoSize
+
+   $ComputerDisks = Get-WmiObject -Class Win32_logicaldisk -Filter "DriveType = '3'" | 
+   Select-Object -Property DeviceID, DriveType, VolumeName, 
+   @{L='FreeSpaceGB';E={"{0:N2}" -f ($_.FreeSpace /1GB)}},
+   @{L="Capacity";E={"{0:N2}" -f ($_.Size/1GB)}}
+
+   $ComputerGPU=(Get-CimInstance CIM_VideoController|%{$_.Name}) -join("; ")
+    [void] [Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms.Screens") 
+
+   $ComputerOS = (Get-WmiObject Win32_OperatingSystem).Version
+
+   switch -Wildcard ($ComputerOS){
+      "6.1.7600" {$OS = "Windows 7"; break}
+      "6.1.7601" {$OS = "Windows 7 SP1"; break}
+      "6.2.9200" {$OS = "Windows 8"; break}
+      "6.3.9600" {$OS = "Windows 8.1"; break}
+      "10.0.*"   {$OS = "Windows 10"; break}
+      default {$OS = "Unknown Operating System"; break}
+   }
+
+   Write-Output $ComputerHostname
+   Write-Host "Operating System: $OS"
+   Write-Output $ComputerHW
+   Write-Output $ComputerSerialNumber
+   Write-Output $ComputerCPU
+   Write-Output $ComputerGPU
+   Write-Output $ComputerRam_Total
+   Write-Output $ComputerRAM
+   Write-Output $ComputerDisks
+   }
+   test | Out-File c:\test\test.txt
+pause
